@@ -67,7 +67,61 @@ SELECT [Purchase Date]
 FROM [Electronic_sales_Sep2023-Sep2024]
 WHERE [Purchase Date] Like '%2024%'
 
+--Temp 1
+CREATE TABLE #Product_Sales_Performance
+(
+Product_Types Nvarchar(255),
+Total_Sales float
+)
 
+INSERT INTO #Product_Sales_Performance
+-- Product Sales Performance
+SELECT [Product Type], SUM([Total Price]) TotalSales
+FROM [Electronic_sales_Sep2023-Sep2024]
+GROUP BY [Product Type]
+ORDER BY TotalSales DESC
+
+--Temp 2
+DROP TABLE IF EXISTS #Total_Sales_AgeGroup
+CREATE TABLE #Total_Sales_AgeGroup
+(
+Age_Group Nvarchar(255),
+Total_Sales float
+)
+
+INSERT INTO #Total_Sales_AgeGroup
+-- Total Sales by AgeGroup
+SELECT AgeGroup ,SUM(TotalSales) TotalSales
+FROM #UpdatedElectronics
+GROUP BY AgeGroup
+ORDER BY AgeGroup DESC
+
+--Temp 3
+CREATE TABLE #Rolling_sum_of_TotalSales_OverTime
+(
+Purchase_Date Nvarchar(255),
+Total_Sales float,
+Rolling_TotalSales float
+)
+
+INSERT INTO #Rolling_sum_of_TotalSales_OverTime
+SELECT [Purchase Date],[Total Price],SUM([Total Price]) OVER (PARTITION BY [Purchase Date] ORDER BY [Purchase Date] ,[Total Price]) RollingTotalSales
+FROM [Electronic_sales_Sep2023-Sep2024]
+GROUP BY [Purchase Date],[Total Price]
+
+--CREATING VIEWS
+--VIEW 1
+CREATE VIEW Product_Sales_Performance AS
+SELECT [Product Type], SUM([Total Price]) TotalSales
+FROM [Electronic_sales_Sep2023-Sep2024]
+GROUP BY [Product Type]
+--ORDER BY TotalSales DESC
+
+--VIEW 2
+CREATE VIEW Rolling_sum_of_TotalSales_OverTime AS
+SELECT [Purchase Date],[Total Price],SUM([Total Price]) OVER (PARTITION BY [Purchase Date] ORDER BY [Purchase Date] ,[Total Price]) RollingTotalSales
+FROM [Electronic_sales_Sep2023-Sep2024]
+GROUP BY [Purchase Date],[Total Price]
 
 SELECT SUM(Quantity)ToTalSalesNo ,SUM([Total Price]) TotalSales
 FROM [Electronic_sales_Sep2023-Sep2024]
