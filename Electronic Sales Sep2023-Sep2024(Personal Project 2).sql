@@ -42,6 +42,13 @@ SELECT *
 FROM #UpdatedElectronics
 
 
+--Customer Purchase Patterns
+SELECT CustomerID,COUNT(CustomerID) NoOfOrders,SUM(TotalSales) TotalSales
+FROM #UpdatedElectronics
+WHERE OrderStatus = 'Completed'
+GROUP BY CustomerID
+
+
 
 
 -- Product Sales Performance
@@ -67,7 +74,7 @@ SELECT [Purchase Date]
 FROM [Electronic_sales_Sep2023-Sep2024]
 WHERE [Purchase Date] Like '%2024%'
 
---Temp 1
+--Temp table 1
 CREATE TABLE #Product_Sales_Performance
 (
 Product_Types Nvarchar(255),
@@ -81,7 +88,7 @@ FROM [Electronic_sales_Sep2023-Sep2024]
 GROUP BY [Product Type]
 ORDER BY TotalSales DESC
 
---Temp 2
+--Temp table 2
 DROP TABLE IF EXISTS #Total_Sales_AgeGroup
 CREATE TABLE #Total_Sales_AgeGroup
 (
@@ -96,20 +103,23 @@ FROM #UpdatedElectronics
 GROUP BY AgeGroup
 ORDER BY AgeGroup DESC
 
---Temp 3
-CREATE TABLE #Rolling_sum_of_TotalSales_OverTime
+--Temp table 3
+CREATE TABLE #Customer_Purchase_patterns 
 (
-Purchase_Date Nvarchar(255),
+CustomerID int,
+OrderCount int,
 Total_Sales float,
-Rolling_TotalSales float
 )
 
-INSERT INTO #Rolling_sum_of_TotalSales_OverTime
-SELECT [Purchase Date],[Total Price],SUM([Total Price]) OVER (PARTITION BY [Purchase Date] ORDER BY [Purchase Date] ,[Total Price]) RollingTotalSales
+INSERT INTO #Customer_Purchase_patterns 
+SELECT [Customer ID],COUNT([Customer ID]) NoOfOrders,SUM([Total Price]) TotalSales
 FROM [Electronic_sales_Sep2023-Sep2024]
-GROUP BY [Purchase Date],[Total Price]
+WHERE [Order Status] = 'Completed'
+GROUP BY [Customer ID]
 
 --CREATING VIEWS
+
+
 --VIEW 1
 CREATE VIEW Product_Sales_Performance AS
 SELECT [Product Type], SUM([Total Price]) TotalSales
@@ -123,15 +133,14 @@ SELECT [Purchase Date],[Total Price],SUM([Total Price]) OVER (PARTITION BY [Purc
 FROM [Electronic_sales_Sep2023-Sep2024]
 GROUP BY [Purchase Date],[Total Price]
 
-SELECT SUM(Quantity)ToTalSalesNo ,SUM([Total Price]) TotalSales
+--VIEW 3
+CREATE VIEW Customer_Purchase_patterns  AS
+SELECT [Customer ID],COUNT([Customer ID]) NoOfOrders,SUM([Total Price]) TotalSales
 FROM [Electronic_sales_Sep2023-Sep2024]
+WHERE [Order Status] = 'Completed'
+GROUP BY [Customer ID]
 
-
-SELECT *, 
-CASE
-	WHEN [Purchase Date] LIKE '%2024%' THEN '2024'
-	WHEN [Purchase Date] LIKE '%2023%' THEN '2023'
-END Year
+SELECT SUM(Quantity)ToTalSalesNo ,SUM([Total Price]) TotalSales
 FROM [Electronic_sales_Sep2023-Sep2024]
 
 
